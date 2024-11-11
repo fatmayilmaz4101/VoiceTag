@@ -1,5 +1,15 @@
 {
   "expo": {
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(VoiceTag) to access your camera",
+          "microphonePermission": "Allow $(VoiceTag) to access your microphone",
+          "recordAudioAndroid": true
+        }
+      ]
+    ],
     "name": "VoiceTag",
     "slug": "VoiceTag",
     "version": "1.0.0",
@@ -14,12 +24,7 @@
     "ios": {
       "supportsTablet": true
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
-    },
+    "android": {},
     "web": {
       "favicon": "./assets/favicon.png"
     }
