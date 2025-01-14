@@ -22,9 +22,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "newArchEnabled": true
     },
-    "android": {},
+    "android": {
+      "newArchEnabled": true
+    },
     "web": {
       "favicon": "./assets/favicon.png"
     }
