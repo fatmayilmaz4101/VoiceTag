@@ -3,18 +3,35 @@ import {
   useCameraPermissions,
   BarcodeScanningResult,
 } from "expo-camera";
-import React, { useState } from "react";
-import { Dimensions, Text, View, Button } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  Dimensions,
+  Text,
+  View,
+  Button,
+  TouchableWithoutFeedback,
+} from "react-native";
 import getStyles from "./Camera.style";
 import { getProduct } from "../service/ProductService";
 import * as Speech from "expo-speech";
+import JsBarcode from "jsbarcode";
 
 const { height, width } = Dimensions.get("window");
 
 const Camera = () => {
   const [permission, requestPermission] = useCameraPermissions();
-  const [scanned, setScanned] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [isTouched, setIsTouched] = useState(false);
   const styles = getStyles(width, height);
+  useEffect(() => {
+    if (isTouched) {
+      setIsScanning(true);
+      Speech.speak("Tarama başlatıldı", { language: "tr-TR" });
+    } else {
+      setIsScanning(false);
+      Speech.speak("Tarama durduruldu", { language: "tr-TR" });
+    }
+  }, [isTouched]);
 
   if (!permission) {
     return <View />;
@@ -28,41 +45,57 @@ const Camera = () => {
       </View>
     );
   }
+  const handleBarCodeScanned = async ({
+    data,
+    bounds,
+  }: BarcodeScanningResult) => {
+    //if (!isTouched && isScanning) return;
+    setIsTouched(false);
+    setIsScanning(false);
 
-  const handleBarCodeScanned = async ({ data }: BarcodeScanningResult) => {
-    setScanned(true);
     let barcode = data;
     if (data.includes("-")) {
       const parts = data.split("-");
       barcode = parts[1];
     }
-    console.log(barcode);
-    const product = await getProduct(barcode);
 
-    if (product != "Ürün bulunamadı.") {
-      const message = `${product.name}, ${product.price} TL`;
-      Speech.speak(message, {
-        language: "tr-TR",
-        onDone: () => setScanned(false),
-      });
+    console.log("data: ", data);
+    console.log("barcode: ", barcode);
+
+    const product = await getProduct(barcode);
+    const message =
+      product != "Ürün bulunamadı."
+        ? `${product.name}, ${product.price} TL`
+        : "Ürün bulunamadı";
+
+    const speakWords = async (message: string) => {
+      const word = message.replaceAll("-", " ");
+      Speech.speak(word, { language: "tr-TR" });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      Speech.speak("Tarama tamamlandı", { language: "tr-TR" });
+    };
+    await speakWords(message);
+  };
+  const resetScanner = () => {
+    setIsTouched(!isTouched);
+    if (isTouched) {
+      setIsScanning(true);
     } else {
-      const message = "Ürün bulunamadı";
-      Speech.speak(message, {
-        language: "tr-TR",
-        onDone: () => setScanned(false),
-      });
+      setIsScanning(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <CameraView
-        style={styles.camera}
-        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-      >
-        <View style={styles.buttonContainer}></View>
-      </CameraView>
-    </View>
+    <TouchableWithoutFeedback onPress={resetScanner}>
+      <View style={styles.container}>
+        <CameraView
+          style={styles.camera}
+          onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
+        >
+          <View style={styles.buttonContainer}></View>
+        </CameraView>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
